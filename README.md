@@ -12,7 +12,7 @@ This Python project provides a wrapper for the Telegram Bot API, enabling you to
 
 ## Todo:
 - Implement async recive metodes
----
+- 
 
 ## Installation
 
@@ -32,7 +32,6 @@ This Python project provides a wrapper for the Telegram Bot API, enabling you to
    - Obtain your bot's **API token**.
    - Retrieve your **chat ID** using a bot like [@getidsbot](https://telegram.me/getidsbot).
 
----
 
 ## Usage
 
@@ -76,7 +75,7 @@ This Python project provides a wrapper for the Telegram Bot API, enabling you to
    print(response)
    ```
 
----
+
 
 ## Code Overview
 
@@ -95,7 +94,6 @@ Used to parse and structure the API's JSON responses. Key attributes:
 - `message_id`, `date`, `text`: Available if the response contains message details.
 - `error_code`, `description`: Available if an error occurs.
 
----
 
 ## Example
 
@@ -120,7 +118,7 @@ print(photo_response)
 bot.delete_message(message_id=response.message_id)
 ```
 
----
+
 
 ## Error Handling
 - If an API call fails, the `Return_Object` will contain `error_code` and `description`.
@@ -130,18 +128,15 @@ bot.delete_message(message_id=response.message_id)
       print(f"Error {response.error_code}: {response.description}")
   ```
 
----
 
 ## Dependencies
 - `requests`: For making HTTP requests to the Telegram API.
 
----
 
 ## Notes
 - Stickers must be in `.webp` format and stored in a `../stickers/` folder relative to the script.
 - For advanced features like inline keyboards, the code can be extended as needed.
 
----
 
 ## License
 This project is licensed under the MIT License. You are free to use, modify, and distribute it.
