@@ -12,7 +12,6 @@ This Python project provides a wrapper for the Telegram Bot API, enabling you to
 
 ## Todo:
 - Implement async recive metodes
-- 
 
 ## Installation
 
