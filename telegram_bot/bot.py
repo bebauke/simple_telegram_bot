@@ -39,26 +39,28 @@ class Return_Object:
         return string
 
 class TelegramBot:
-           
-
     def __init__(self, token, chat_id):
         self.token = token
         self.chat_id = chat_id
+        self.url = f"https://api.telegram.org/bot{self.token}"
 
-    def send_message(self, text):
-        url = f"https://api.telegram.org/bot{self.token}/sendMessage"
+    def send_message(self, text, chat_id=None):
+        chat_id = chat_id or self.chat_id
+        url = f"{self.url}/sendMessage"
         data = {
-            "chat_id": self.chat_id,
-            "text": text,
+            "chat_id": chat_id,
+            "text": text
         }
         response = requests.post(url, data=data)
         return Return_Object(response.json())
 
-    def send_photo(self, photo, caption=None):
+
+    def send_photo(self, photo, caption=None, chat_id=None):
+        chat_id = chat_id or self.chat_id
         response = []
-        url = f"https://api.telegram.org/bot{self.token}/sendPhoto"
+        url = f"{self.url}/sendPhoto"
         data = {
-            "chat_id": self.chat_id,
+            "chat_id": chat_id, 
         }
         if caption:
             data["caption"] = caption
@@ -74,24 +76,31 @@ class TelegramBot:
             print(response)
         return response
 
-    def send_sticker(self, sticker):
-        response = []
-        url = f"https://api.telegram.org/bot{self.token}/sendSticker"
-        data = {
-            "chat_id": self.chat_id,
-        }
-        file_path = os.path.dirname(os.path.abspath(__file__))
-        sticker_folder = file_path +'/../stickers/'
-        sticker = sticker_folder + sticker + '.webp'
-        with open(sticker, 'rb') as f:
+    def send_sticker(self, sticker_relative_path, chat_id=None):
+        chat_id = chat_id or self.chat_id
+        url = f"{self.url}/sendSticker"
+        data = {"chat_id": chat_id}
+
+        # Den Stickerpfad relativ zur aufrufenden Datei auflösen
+        caller_dir = os.path.dirname(os.path.abspath(__file__))
+        sticker_path = os.path.abspath(os.path.join(caller_dir, sticker_relative_path))
+
+        # Prüfen, ob der Sticker existiert
+        if not os.path.isfile(sticker_path):
+            raise FileNotFoundError(f"Sticker not found at path: {sticker_path}")
+
+        # Sticker senden
+        with open(sticker_path, 'rb') as f:
             files = {'sticker': f}
             response = requests.post(url, data=data, files=files)
+
         return Return_Object(response.json())
 
-    def edit_message_text(self, message_id, text):
-        url = f"https://api.telegram.org/bot{self.token}/editMessageText"
+    def edit_message_text(self, message_id, text, chat_id=None):
+        chat_id = chat_id or self.chat_id
+        url = f"{self.url}/editMessageText"
         data = {
-            "chat_id": self.chat_id,
+            "chat_id": chat_id,
             "message_id": message_id,
             "text": text,
         }
@@ -99,11 +108,12 @@ class TelegramBot:
         return Return_Object(response.json())
 
         
-    def edit_message_photo(self, message_id, photo, caption=None):
+    def edit_message_photo(self, message_id, photo, caption=None, chat_id=None):
+        chat_id = chat_id or self.chat_id
 
-        url = f"https://api.telegram.org/bot{self.token}/editMessageMedia"
+        url = f"{self.url}/editMessageMedia"
         data = {
-            "chat_id": self.chat_id,
+            "chat_id": chat_id,
             "message_id": message_id,
         }
         
@@ -124,11 +134,58 @@ class TelegramBot:
             print(response)
         return response
 
-    def delete_message(self, message_id):
-        url = f"https://api.telegram.org/bot{self.token}/deleteMessage"
+    def delete_message(self, message_id, chat_id=None):
+        chat_id = chat_id or self.chat_id
+        url = f"{self.url}/deleteMessage"
         data = {
-            "chat_id": self.chat_id,
+            "chat_id": chat_id,
             "message_id": message_id,
         }
         response = requests.post(url, data=data)
+        return Return_Object(response.json())
+    
+    def get_updates(self, offset=None):
+        params = {"offset": offset} if offset else {}
+        response = requests.get(f"{self.url}/getUpdates", params=params)
+        if response.status_code == 200:
+            return Return_Object(response.json())
+        return None
+    
+    def add_webhook(self, url):
+        '''
+        Set webhook to receive updates via POST requests.
+
+        Args:
+            url (str): The URL to send the POST requests to. Must be HTTPS.
+
+        Returns:
+            Return_Object: The response from the Telegram API as a structured object.
+
+        ## Documentation:
+            This method configures a webhook for the Telegram bot. When the webhook
+            is set, Telegram will send all updates (e.g., messages, callbacks) to the
+            provided URL via POST requests. The URL must be accessible via HTTPS.
+
+            If the webhook is successfully set, the bot will no longer rely on polling 
+            (`getUpdates`) to receive updates. The webhook must be handled server-side, 
+            with an endpoint capable of processing Telegram updates.
+
+        ### Example Usage:
+            bot = TelegramBot(token="YOUR_TOKEN")
+            response = bot.add_webhook("https://your-server.com/webhook")
+            print(response)
+
+        ### Notes:
+            - Ensure your server is properly configured with an HTTPS certificate.
+            - To remove the webhook and revert to polling, use `deleteWebhook`.
+
+        ### API Reference:
+            - https://core.telegram.org/bots/api#setwebhook
+        '''
+        response = requests.get(f"{self.url}/setWebhook?url={url}")
+        return Return_Object(response.json())
+
+    def remove_webhook(self):
+        '''Remove webhook to stop receiving updates via POST requests'''
+        response = requests.post(f"{self.url}/deleteWebhook")
         return Return_Object(response.json())
